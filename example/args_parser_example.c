@@ -29,5 +29,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    printf("%s:%d\n", args.host_optional_arg, args.port_required_arg);
+    printf("file %s accessible on %s:%d\n", args.input_pos_arg, args.host_optional_arg, args.port_required_arg);
+
+    if (args.verbose_bool_arg) {
+        printf("using verbose mode\n");
+    }
+    if (args.quiet_short_arg) {
+        printf("using quiet mode\n");
+    }
 }

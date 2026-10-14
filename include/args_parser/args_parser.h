@@ -29,9 +29,11 @@
 // Fields in args_t are named <name>_pos_arg / _required_arg / _optional_arg / _bool_arg / _short_arg.
 // parse_args() returns false (after printing an error to stderr) on any failure.
 
-// #define POSITIONAL_ARG(type, name, position, description, parser)
-// #define BOOLEAN_FLAG(name, flag, description)
-// #define SHORT_FLAG(name, flag, description)
+#define POSITIONAL_ARG(type, name, position, description, parser) POSITIONAL_ARG_IMPL(type, name, position, description, parser)
+#define REQUIRED_FLAG(type, name, flag, description, parser) REQUIRED_FLAG_IMPL(type, name, flag, description, parser)
+#define OPTIONAL_FLAG(type, name, flag, default_val, description, parser) OPTIONAL_FLAG_IMPL(type, name, flag, default_val, description, parser)
+#define BOOLEAN_FLAG(name, flag, description) BOOLEAN_FLAG_IMPL(name, flag, description)
+#define SHORT_FLAG(name, flag, description) SHORT_FLAG_IMPL(name, flag, description)
 
 #define POSITIONAL_STRING_ARG(name, position, description) POSITIONAL_ARG(char*, name, position, description, args_parse_str)
 #define POSITIONAL_CHAR_ARG(name, position, description) POSITIONAL_ARG(char, name, position, description, args_parse_char)
@@ -191,34 +193,34 @@ DEFINE_FLOATING_PARSER(args_parse_double, strtod, double, DBL_MAX, -DBL_MAX);
 // COUNTS
 
 #ifdef POSITIONAL_ARGS
-#define POSITIONAL_ARG(...) +1
+#define POSITIONAL_ARG_IMPL(...) +1
 static constexpr int POSITIONAL_ARG_COUNT = 0 POSITIONAL_ARGS;
-#undef POSITIONAL_ARG
+#undef POSITIONAL_ARG_IMPL
 #else
 static constexpr int POSITIONAL_ARG_COUNT = 0;
 #endif
 
 #ifdef REQUIRED_FLAGS
-#define REQUIRED_FLAG(...) +1
+#define REQUIRED_FLAG_IMPL(...) +1
 static constexpr int REQUIRED_FLAG_COUNT = 0 REQUIRED_FLAGS;
-#undef REQUIRED_FLAG
+#undef REQUIRED_FLAG_IMPL
 
 // index of each required flag in the "seen" array
 enum {
-#define REQUIRED_FLAG(type, name, ...) MERGE_TWO(args_idx_, name),
+#define REQUIRED_FLAG_IMPL(type, name, ...) MERGE_TWO(args_idx_, name),
     REQUIRED_FLAGS
-#undef REQUIRED_FLAG
+#undef REQUIRED_FLAG_IMPL
 };
 #else
 static constexpr int REQUIRED_FLAG_COUNT = 0;
 #endif
 
 // ARG_T STRUCT
-#define POSITIONAL_ARG(type, name, ...) type MERGE_TWO(name, _pos_arg);
-#define REQUIRED_FLAG(type, name, ...) type MERGE_TWO(name, _required_arg);
-#define OPTIONAL_FLAG(type, name, ...) type MERGE_TWO(name, _optional_arg);
-#define BOOLEAN_FLAG(name, ...) bool MERGE_TWO(name, _bool_arg);
-#define SHORT_FLAG(name, ...) bool MERGE_TWO(name, _short_arg);
+#define POSITIONAL_ARG_IMPL(type, name, ...) type MERGE_TWO(name, _pos_arg);
+#define REQUIRED_FLAG_IMPL(type, name, ...) type MERGE_TWO(name, _required_arg);
+#define OPTIONAL_FLAG_IMPL(type, name, ...) type MERGE_TWO(name, _optional_arg);
+#define BOOLEAN_FLAG_IMPL(name, ...) bool MERGE_TWO(name, _bool_arg);
+#define SHORT_FLAG_IMPL(name, ...) bool MERGE_TWO(name, _short_arg);
 
 typedef struct {
 #ifdef POSITIONAL_ARGS
@@ -240,19 +242,19 @@ typedef struct {
     bool seen[REQUIRED_FLAG_COUNT + 1];
 } args_t;
 
-#undef SHORT_FLAG
-#undef BOOLEAN_FLAG
-#undef OPTIONAL_FLAG
-#undef REQUIRED_FLAG
-#undef POSITIONAL_ARG
+#undef SHORT_FLAG_IMPL
+#undef BOOLEAN_FLAG_IMPL
+#undef OPTIONAL_FLAG_IMPL
+#undef REQUIRED_FLAG_IMPL
+#undef POSITIONAL_ARG_IMPL
 
 [[maybe_unused]] static inline args_t make_default_args() {
     const args_t args = {
-#define POSITIONAL_ARG(type, name, ...) .MERGE_TWO(name, _pos_arg) = (type) 0,
-#define REQUIRED_FLAG(type, name, ...) .MERGE_TWO(name, _required_arg) = (type) 0,
-#define OPTIONAL_FLAG(type, name, flag, default_val, ...) .MERGE_TWO(name, _optional_arg) = (type) default_val,
-#define BOOLEAN_FLAG(name, ...) .MERGE_TWO(name, _bool_arg) = false,
-#define SHORT_FLAG(name, ...) .MERGE_TWO(name, _short_arg) = false,
+#define POSITIONAL_ARG_IMPL(type, name, ...) .MERGE_TWO(name, _pos_arg) = (type) 0,
+#define REQUIRED_FLAG_IMPL(type, name, ...) .MERGE_TWO(name, _required_arg) = (type) 0,
+#define OPTIONAL_FLAG_IMPL(type, name, flag, default_val, ...) .MERGE_TWO(name, _optional_arg) = (type) default_val,
+#define BOOLEAN_FLAG_IMPL(name, ...) .MERGE_TWO(name, _bool_arg) = false,
+#define SHORT_FLAG_IMPL(name, ...) .MERGE_TWO(name, _short_arg) = false,
 
 #ifdef POSITIONAL_ARGS
         POSITIONAL_ARGS
@@ -270,11 +272,11 @@ typedef struct {
         SHORT_FLAGS
 #endif
 
-#undef SHORT_FLAG
-#undef BOOLEAN_FLAG
-#undef OPTIONAL_FLAG
-#undef REQUIRED_FLAG
-#undef POSITIONAL_ARG
+#undef SHORT_FLAG_IMPL
+#undef BOOLEAN_FLAG_IMPL
+#undef OPTIONAL_FLAG_IMPL
+#undef REQUIRED_FLAG_IMPL
+#undef POSITIONAL_ARG_IMPL
         .pos_count = 0,
         .seen = {false},
     };
@@ -314,19 +316,19 @@ typedef struct {
     }
 
 #ifdef REQUIRED_FLAGS
-#define REQUIRED_FLAG(type, name, flag, description, parser) \
+#define REQUIRED_FLAG_IMPL(type, name, flag, description, parser) \
     ARGS_SET_VALUE(MERGE_TWO(name, _required_arg), flag, parser, seen[MERGE_TWO(args_idx_, name)] = true)
     REQUIRED_FLAGS
-#undef REQUIRED_FLAG
+#undef REQUIRED_FLAG_IMPL
 #endif
 #ifdef OPTIONAL_FLAGS
-#define OPTIONAL_FLAG(type, name, flag, default_val, description, parser) \
+#define OPTIONAL_FLAG_IMPL(type, name, flag, default_val, description, parser) \
     ARGS_SET_VALUE(MERGE_TWO(name, _optional_arg), flag, parser, (void) 0)
     OPTIONAL_FLAGS
-#undef OPTIONAL_FLAG
+#undef OPTIONAL_FLAG_IMPL
 #endif
 #ifdef BOOLEAN_FLAGS
-#define BOOLEAN_FLAG(name, flag, description) \
+#define BOOLEAN_FLAG_IMPL(name, flag, description) \
     if (ARGS_FLAG_MATCHES(flag)) { \
         if (value) { \
             fprintf(stderr, "Error: '--%s' does not take a value\n", flag); \
@@ -336,7 +338,7 @@ typedef struct {
         return next; \
     }
     BOOLEAN_FLAGS
-#undef BOOLEAN_FLAG
+#undef BOOLEAN_FLAG_IMPL
 #endif
 
 #undef ARGS_SET_VALUE
@@ -356,13 +358,13 @@ typedef struct {
     for (const char *c = argv[idx] + 1; *c; ++c) {
         MAYBE_CONST bool matched = false;
 #ifdef SHORT_FLAGS
-#define SHORT_FLAG(name, flag, description) \
+#define SHORT_FLAG_IMPL(name, flag, description) \
         if (*c == (flag)) { \
             args->MERGE_TWO(name, _short_arg) = true; \
             matched = true; \
         }
         SHORT_FLAGS
-#undef SHORT_FLAG
+#undef SHORT_FLAG_IMPL
 #endif
         if (!matched) {
             fprintf(stderr, "Error: unknown flag '-%c'\n", *c);
@@ -377,7 +379,7 @@ typedef struct {
 [[maybe_unused]] static int parse_pos_arg(const int idx, char *argv[], [[maybe_unused]] args_t *args,
                                           [[maybe_unused]] int *pos_idx) {
 #ifdef POSITIONAL_ARGS
-#define POSITIONAL_ARG(type, name, position, description, parser) \
+#define POSITIONAL_ARG_IMPL(type, name, position, description, parser) \
     if ((position) == *pos_idx) { \
         int ok = 0; \
         args->MERGE_TWO(name, _pos_arg) = parser(#name, argv[idx], &ok); \
@@ -388,7 +390,7 @@ typedef struct {
         return idx; \
     }
     POSITIONAL_ARGS
-#undef POSITIONAL_ARG
+#undef POSITIONAL_ARG_IMPL
 #endif
     fprintf(stderr, "Error: unexpected positional argument '%s'\n", argv[idx]);
     return -1;
@@ -434,14 +436,14 @@ typedef struct {
 #endif
     MAYBE_CONST bool ok = true;
 #ifdef REQUIRED_FLAGS
-#define REQUIRED_FLAG(type, name, flag, ...) \
+#define REQUIRED_FLAG_IMPL(type, name, flag, ...) \
     if (!args->seen[MERGE_TWO(args_idx_, name)]) { \
         fprintf(stderr, "Error: missing required flag '--%s'\n", flag); \
         ok = false; \
     }
     REQUIRED_FLAGS
 #endif
-#undef REQUIRED_FLAG
+#undef REQUIRED_FLAG_IMPL
 #ifdef POSITIONAL_ARGS
     if (args->pos_count < POSITIONAL_ARG_COUNT) {
         fprintf(stderr, "Error: expected %d positional argument(s), got %d\n", POSITIONAL_ARG_COUNT, args->pos_count);
@@ -455,9 +457,9 @@ typedef struct {
 [[maybe_unused]] static void args_print_usage(const char *exec_name) {
     fprintf(stdout, "Usage: %s [options]", exec_name);
 #ifdef POSITIONAL_ARGS
-#define POSITIONAL_ARG(type, name, ...) fprintf(stdout, " <%s>", #name);
+#define POSITIONAL_ARG_IMPL(type, name, ...) fprintf(stdout, " <%s>", #name);
     POSITIONAL_ARGS
-#undef POSITIONAL_ARG
+#undef POSITIONAL_ARG_IMPL
 #endif
     fprintf(stdout, "\n");
 }
@@ -466,35 +468,35 @@ typedef struct {
     args_print_usage(exec_name);
 #ifdef POSITIONAL_ARGS
     fprintf(stdout, "\nArguments:\n");
-#define POSITIONAL_ARG(type, name, position, description, parser) \
+#define POSITIONAL_ARG_IMPL(type, name, position, description, parser) \
     fprintf(stdout, "  %-24s %s\n", #name, description);
     POSITIONAL_ARGS
-#undef POSITIONAL_ARG
+#undef POSITIONAL_ARG_IMPL
 #endif
     fprintf(stdout, "\nOptions:\n");
 #ifdef REQUIRED_FLAGS
-#define REQUIRED_FLAG(type, name, flag, description, parser) \
+#define REQUIRED_FLAG_IMPL(type, name, flag, description, parser) \
     fprintf(stdout, "  --%-22s %s (required)\n", flag, description);
     REQUIRED_FLAGS
-#undef REQUIRED_FLAG
+#undef REQUIRED_FLAG_IMPL
 #endif
 #ifdef OPTIONAL_FLAGS
-#define OPTIONAL_FLAG(type, name, flag, default_val, description, parser) \
+#define OPTIONAL_FLAG_IMPL(type, name, flag, default_val, description, parser) \
     fprintf(stdout, "  --%-22s %s (default: %s)\n", flag, description, #default_val);
     OPTIONAL_FLAGS
-#undef OPTIONAL_FLAG
+#undef OPTIONAL_FLAG_IMPL
 #endif
 #ifdef BOOLEAN_FLAGS
-#define BOOLEAN_FLAG(name, flag, description) \
+#define BOOLEAN_FLAG_IMPL(name, flag, description) \
     fprintf(stdout, "  --%-22s %s\n", flag, description);
     BOOLEAN_FLAGS
-#undef BOOLEAN_FLAG
+#undef BOOLEAN_FLAG_IMPL
 #endif
 #ifdef SHORT_FLAGS
-#define SHORT_FLAG(name, flag, description) \
+#define SHORT_FLAG_IMPL(name, flag, description) \
     fprintf(stdout, "  -%-23c %s\n", flag, description);
     SHORT_FLAGS
-#undef SHORT_FLAG
+#undef SHORT_FLAG_IMPL
 #endif
 }
 
