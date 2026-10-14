@@ -35,7 +35,7 @@
 #define BOOLEAN_FLAG(name, flag, description) BOOLEAN_FLAG_IMPL(name, flag, description)
 #define SHORT_FLAG(name, flag, description) SHORT_FLAG_IMPL(name, flag, description)
 
-#define POSITIONAL_STRING_ARG(name, position, description) POSITIONAL_ARG(char*, name, position, description, args_parse_str)
+#define POSITIONAL_STRING_ARG(name, position, description) POSITIONAL_ARG(const char*, name, position, description, args_parse_str)
 #define POSITIONAL_CHAR_ARG(name, position, description) POSITIONAL_ARG(char, name, position, description, args_parse_char)
 #define POSITIONAL_INT16_ARG(name, position, description) POSITIONAL_ARG(int16_t, name, position, description, args_parse_int16)
 #define POSITIONAL_UINT16_ARG(name, position, description) POSITIONAL_ARG(uint16_t, name, position, description, args_parse_uint16)
@@ -47,7 +47,7 @@
 #define POSITIONAL_FLOAT_ARG(name, position, description) POSITIONAL_ARG(float, name, position, description, args_parse_float)
 #define POSITIONAL_DOUBLE_ARG(name, position, description) POSITIONAL_ARG(double, name, position, description, args_parse_double)
 
-#define REQUIRED_STRING_FLAG(name, flag, description) REQUIRED_FLAG(char*, name, flag, description, args_parse_str)
+#define REQUIRED_STRING_FLAG(name, flag, description) REQUIRED_FLAG(const char*, name, flag, description, args_parse_str)
 #define REQUIRED_CHAR_FLAG(name, flag, description) REQUIRED_FLAG(char, name, flag, description, args_parse_char)
 #define REQUIRED_INT16_FLAG(name, flag, description) REQUIRED_FLAG(int16_t, name, flag, description, args_parse_int16)
 #define REQUIRED_UINT16_FLAG(name, flag, description) REQUIRED_FLAG(uint16_t, name, flag, description, args_parse_uint16)
@@ -59,7 +59,7 @@
 #define REQUIRED_FLOAT_FLAG(name, flag, description) REQUIRED_FLAG(float, name, flag, description, args_parse_float)
 #define REQUIRED_DOUBLE_FLAG(name, flag, description) REQUIRED_FLAG(double, name, flag, description, args_parse_double)
 
-#define OPTIONAL_STRING_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(char*, name, flag, default_val, description, args_parse_str)
+#define OPTIONAL_STRING_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(const char*, name, flag, default_val, description, args_parse_str)
 #define OPTIONAL_CHAR_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(char, name, flag, default_val, description, args_parse_char)
 #define OPTIONAL_INT16_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(int16_t, name, flag, default_val, description, args_parse_int16)
 #define OPTIONAL_UINT16_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(uint16_t, name, flag, default_val, description, args_parse_uint16)
@@ -75,7 +75,7 @@
 
 #define MERGE_TWO(prefix, suffix) prefix##suffix
 
-static inline char *args_skip_spaces(char *str) {
+static inline const char *args_skip_spaces(const char *str) {
     if (!str) {
         return nullptr;
     }
@@ -101,7 +101,7 @@ static inline char *args_skip_spaces(char *str) {
     return (ret_type)val;
 
 #define DEFINE_SIGNED_INT_PARSER(func_name, ret_type, max_val, min_val) \
-    static inline ret_type func_name(char *name, char *text, int *ok) { \
+    static inline ret_type func_name(const char *name, const char *text, int *ok) { \
         *ok = 0; \
         if (!text) { \
             fprintf(stderr, "Error: null input for '%s'\n", name); \
@@ -116,7 +116,7 @@ static inline char *args_skip_spaces(char *str) {
     }
 
 #define DEFINE_UNSIGNED_INT_PARSER(func_name, ret_type, max_val) \
-    static inline ret_type func_name(char *name, char *text, int *ok) { \
+    static inline ret_type func_name(const char *name, const char *text, int *ok) { \
         *ok = 0; \
         if (!text) { \
             fprintf(stderr, "Error: null input for '%s'\n", name); \
@@ -135,7 +135,7 @@ static inline char *args_skip_spaces(char *str) {
     }
 
 #define DEFINE_FLOATING_PARSER(func_name, converter, ret_type, max_val, min_val) \
-    static inline ret_type func_name(char *name, char *text, int *ok) { \
+    static inline ret_type func_name(const char *name, const char *text, int *ok) { \
         *ok = 0; \
         if (!text) { \
             fprintf(stderr, "Error: null input for '%s'\n", name); \
@@ -149,7 +149,7 @@ static inline char *args_skip_spaces(char *str) {
         PARSE_NUMERIC(converter(text, &end), ret_type, ret_type, val <= max_val && val >= min_val) \
     }
 
-static inline char *args_parse_str(char *name, char *text, int *ok) {
+static inline const char *args_parse_str(const char *name, const char *text, int *ok) {
     *ok = 0;
     if (!text) {
         fprintf(stderr, "Error: null input for '%s'\n", name);
@@ -159,7 +159,7 @@ static inline char *args_parse_str(char *name, char *text, int *ok) {
     return text;
 }
 
-static inline char args_parse_char(char *name, char *text, int *ok) {
+static inline char args_parse_char(const char *name, const char *text, int *ok) {
     *ok = 0;
     if (!text) {
         fprintf(stderr, "Error: null input for '%s'\n", name);
@@ -286,12 +286,12 @@ typedef struct {
 // FLAG PARSING
 
 // --flag=value or --flag value (value-less boolean flags: --flag)
-[[maybe_unused]] static int parse_flag(const int idx, [[maybe_unused]] const int argc, char *argv[],
+[[maybe_unused]] static int parse_flag(const int idx, [[maybe_unused]] const int argc, const char *argv[],
                                        [[maybe_unused]] args_t *args, [[maybe_unused]] bool *seen) {
-    char *name = argv[idx] + 2;
-    char *eq = strchr(name, '=');
+    const char *name = argv[idx] + 2;
+    const char *eq = strchr(name, '=');
     const size_t name_len = eq ? (size_t) (eq - name) : strlen(name);
-    [[maybe_unused]] char *value = eq ? eq + 1 : nullptr;
+    [[maybe_unused]] const char *value = eq ? eq + 1 : nullptr;
     [[maybe_unused]] int next = idx;
 
 #define ARGS_FLAG_MATCHES(flag) (name_len == strlen(flag) && strncmp(name, flag, name_len) == 0)
@@ -349,7 +349,7 @@ typedef struct {
 }
 
 // -a, or a cluster of boolean short flags: -abc
-[[maybe_unused]] static int parse_short_flag(const int idx, char *argv[], [[maybe_unused]] args_t *args) {
+[[maybe_unused]] static int parse_short_flag(const int idx, const char *argv[], [[maybe_unused]] args_t *args) {
 #ifdef SHORT_FLAGS
 #define MAYBE_CONST
 #else
@@ -376,7 +376,7 @@ typedef struct {
 }
 
 // anything not starting with '-': assigned by its declared position
-[[maybe_unused]] static int parse_pos_arg(const int idx, char *argv[], [[maybe_unused]] args_t *args,
+[[maybe_unused]] static int parse_pos_arg(const int idx, const char *argv[], [[maybe_unused]] args_t *args,
                                           [[maybe_unused]] int *pos_idx) {
 #ifdef POSITIONAL_ARGS
 #define POSITIONAL_ARG_IMPL(type, name, position, description, parser) \
@@ -396,7 +396,7 @@ typedef struct {
     return -1;
 }
 
-[[maybe_unused]] static bool parse_args(const int argc, char *argv[], args_t *args) {
+[[maybe_unused]] static bool parse_args(const int argc, const char *argv[], args_t *args) {
     if (!argc || !argv || !args) {
         fprintf(stderr, "Internal Error: null argc, argv or args\n");
         return false;
