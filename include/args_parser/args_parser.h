@@ -13,6 +13,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Compiler version guard
+#if !defined(__cplusplus) && (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L)
+  #error "args_parser requires C23 or newer"
+#endif
+
 // Usage: define any of the lists below BEFORE including this header, e.g.
 //
 //   #define POSITIONAL_ARGS   POSITIONAL_STRING_ARG(input, 0, "input file")

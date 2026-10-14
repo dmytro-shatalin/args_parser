@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.2)
 
-project(args_parser VERSION 1.0.0 LANGUAGES C)
+project(args_parser VERSION 1.0.0 LANGUAGES NONE)
 
 # Header-only library: INTERFACE means it has nothing to compile itself, it only
 # passes usage requirements (include path, C standard) on to whoever links it.
@@ -12,7 +12,7 @@ add_library(args_parser::args_parser ALIAS args_parser)
 
 # The header needs C23 (nullptr, constexpr, bool, [[maybe_unused]]); INTERFACE applies
 # this to consumers, not to the library itself.
-target_compile_features(args_parser INTERFACE c_std_23)
+# target_compile_features(args_parser INTERFACE c_std_23)
 
 # Variables
 option(ARGS_PARSER_BUILD_EXAMPLE "Whether to compile the example" OFF)
@@ -32,6 +32,7 @@ target_sources(args_parser INTERFACE
 )
 
 if (ARGS_PARSER_BUILD_EXAMPLE)
+    enable_language(C)
     add_executable(args_parser_example example/args_parser_example.c)
     # PRIVATE: an executable has no consumers of its own to pass requirements on to.
     target_link_libraries(args_parser_example PRIVATE args_parser::args_parser)
