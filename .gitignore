@@ -72,6 +72,10 @@ dkms.conf
 # Compiled Static libraries
 *.lai
 
+### VSCode ###
+.vscode/
+.cache/
+
 # Executables
 
 ### CLion+all ###

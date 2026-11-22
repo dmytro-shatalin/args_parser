@@ -4,6 +4,11 @@
 
 #define POSITIONAL_ARGS \
     POSITIONAL_STRING_ARG(input, 0, "input file")
+#define LIST_FLAGS \
+    REPEATED_STRING_FLAG(tag, "tag", 4, "tag") \
+    REPEATED_INT32_FLAG(id, "id", 4, "numeric id")
+#define POSITIONAL_REST \
+    REST_STRING_ARG(extra, 0, 8, "extra input files")
 #define REQUIRED_FLAGS \
     REQUIRED_INT32_FLAG(port, "port", "port to listen on")
 #define OPTIONAL_FLAGS \
@@ -18,7 +23,7 @@
 
 int main(int argc, char *argv[]) {
     args_t args;
-    if (!parse_args(argc, argv, &args)) {
+    if (!parse_args(argc, (const char **) argv, &args)) {
         return 1;
     }
     if (args.help_bool_arg || args.help_short_arg) {
@@ -30,6 +35,16 @@ int main(int argc, char *argv[]) {
     }
 
     printf("file %s accessible on %s:%d\n", args.input_pos_arg, args.host_optional_arg, args.port_required_arg);
+
+    for (size_t i = 0; i < args.tag_list_arg.count; ++i) {
+        printf("tag[%zu] = %s\n", i, args.tag_list_arg.items[i]);
+    }
+    for (size_t i = 0; i < args.id_list_arg.count; ++i) {
+        printf("id[%zu] = %d\n", i, args.id_list_arg.items[i]);
+    }
+    for (size_t i = 0; i < args.extra_rest_arg.count; ++i) {
+        printf("extra[%zu] = %s\n", i, args.extra_rest_arg.items[i]);
+    }
 
     if (args.verbose_bool_arg) {
         printf("using verbose mode\n");

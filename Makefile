@@ -7,11 +7,12 @@ prepare:
 	@mkdir build
 
 build:
-	@cmake -S . -B build
+	@cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	@cmake --build build
 
 example: prepare
-	@cmake -DARGS_PARSER_BUILD_EXAMPLE=ON -S . -B build
+	@cmake -DARGS_PARSER_BUILD_EXAMPLE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build
 	@cmake --build build
 	./build/bin/args_parser_example --help
 	./build/bin/args_parser_example data.txt --port=8080 --verbose
+	./build/bin/args_parser_example data.txt --port=8080 --tag=alpha --tag beta --id=7 --id 42 extra1 extra2

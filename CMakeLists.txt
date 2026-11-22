@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 4.2)
 
 project(args_parser VERSION 1.0.0 LANGUAGES NONE)
 
+# The library is header-only and normally needs no compiler. If a caller asks for
+# compile_commands.json (clangd, IDEs), enable C so CMake can actually produce it
+# and so the variable is not reported as unused.
+if (CMAKE_EXPORT_COMPILE_COMMANDS)
+    enable_language(C)
+endif ()
+
 # Header-only library: INTERFACE means it has nothing to compile itself, it only
 # passes usage requirements (include path, C standard) on to whoever links it.
 add_library(args_parser INTERFACE)

@@ -25,8 +25,11 @@
 //   #define OPTIONAL_FLAGS    OPTIONAL_STRING_FLAG(host, "host", "localhost", "host name")
 //   #define BOOLEAN_FLAGS     BOOLEAN_FLAG(verbose, "verbose", "verbose output")   // --verbose
 //   #define SHORT_FLAGS       SHORT_FLAG(quiet, 'q', "be quiet")                   // -q, clusters as -qx
+//   #define LIST_FLAGS        REPEATED_STRING_FLAG(tag, "tag", 8, "tag")            // --tag a --tag b
+//   #define POSITIONAL_REST   REST_STRING_ARG(files, 1, 16, "input files")          // app a b c
 //
-// Fields in args_t are named <name>_pos_arg / _required_arg / _optional_arg / _bool_arg / _short_arg.
+// Fields in args_t are named <name>_pos_arg / _required_arg / _optional_arg / _bool_arg /
+// _short_arg / _list_arg / _rest_arg. List and rest fields are structs with `items` and `count`.
 // parse_args() returns false (after printing an error to stderr) on any failure.
 
 #define POSITIONAL_ARG(type, name, position, description, parser) POSITIONAL_ARG_IMPL(type, name, position, description, parser)
@@ -34,6 +37,9 @@
 #define OPTIONAL_FLAG(type, name, flag, default_val, description, parser) OPTIONAL_FLAG_IMPL(type, name, flag, default_val, description, parser)
 #define BOOLEAN_FLAG(name, flag, description) BOOLEAN_FLAG_IMPL(name, flag, description)
 #define SHORT_FLAG(name, flag, description) SHORT_FLAG_IMPL(name, flag, description)
+#define LIST_FLAG(type, name, flag, capacity, description, parser) LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, false)
+#define REQUIRED_LIST_FLAG(type, name, flag, capacity, description, parser) LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, true)
+#define REST_ARG(type, name, min_count, capacity, description, parser) REST_ARG_IMPL(type, name, min_count, capacity, description, parser)
 
 #define POSITIONAL_STRING_ARG(name, position, description) POSITIONAL_ARG(const char*, name, position, description, args_parse_str)
 #define POSITIONAL_CHAR_ARG(name, position, description) POSITIONAL_ARG(char, name, position, description, args_parse_char)
@@ -70,6 +76,44 @@
 #define OPTIONAL_SIZE_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(size_t, name, flag, default_val, description, args_parse_size)
 #define OPTIONAL_FLOAT_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(float, name, flag, default_val, description, args_parse_float)
 #define OPTIONAL_DOUBLE_FLAG(name, flag, default_val, description) OPTIONAL_FLAG(double, name, flag, default_val, description, args_parse_double)
+
+// Repeatable flags: one value per occurrence, stored in a fixed-capacity array.
+#define REPEATED_STRING_FLAG(name, flag, capacity, description) LIST_FLAG(const char*, name, flag, capacity, description, args_parse_str)
+#define REPEATED_CHAR_FLAG(name, flag, capacity, description) LIST_FLAG(char, name, flag, capacity, description, args_parse_char)
+#define REPEATED_INT16_FLAG(name, flag, capacity, description) LIST_FLAG(int16_t, name, flag, capacity, description, args_parse_int16)
+#define REPEATED_UINT16_FLAG(name, flag, capacity, description) LIST_FLAG(uint16_t, name, flag, capacity, description, args_parse_uint16)
+#define REPEATED_INT32_FLAG(name, flag, capacity, description) LIST_FLAG(int32_t, name, flag, capacity, description, args_parse_int32)
+#define REPEATED_UINT32_FLAG(name, flag, capacity, description) LIST_FLAG(uint32_t, name, flag, capacity, description, args_parse_uint32)
+#define REPEATED_INT64_FLAG(name, flag, capacity, description) LIST_FLAG(int64_t, name, flag, capacity, description, args_parse_int64)
+#define REPEATED_UINT64_FLAG(name, flag, capacity, description) LIST_FLAG(uint64_t, name, flag, capacity, description, args_parse_uint64)
+#define REPEATED_SIZE_FLAG(name, flag, capacity, description) LIST_FLAG(size_t, name, flag, capacity, description, args_parse_size)
+#define REPEATED_FLOAT_FLAG(name, flag, capacity, description) LIST_FLAG(float, name, flag, capacity, description, args_parse_float)
+#define REPEATED_DOUBLE_FLAG(name, flag, capacity, description) LIST_FLAG(double, name, flag, capacity, description, args_parse_double)
+
+#define REQUIRED_REPEATED_STRING_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(const char*, name, flag, capacity, description, args_parse_str)
+#define REQUIRED_REPEATED_CHAR_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(char, name, flag, capacity, description, args_parse_char)
+#define REQUIRED_REPEATED_INT16_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(int16_t, name, flag, capacity, description, args_parse_int16)
+#define REQUIRED_REPEATED_UINT16_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(uint16_t, name, flag, capacity, description, args_parse_uint16)
+#define REQUIRED_REPEATED_INT32_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(int32_t, name, flag, capacity, description, args_parse_int32)
+#define REQUIRED_REPEATED_UINT32_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(uint32_t, name, flag, capacity, description, args_parse_uint32)
+#define REQUIRED_REPEATED_INT64_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(int64_t, name, flag, capacity, description, args_parse_int64)
+#define REQUIRED_REPEATED_UINT64_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(uint64_t, name, flag, capacity, description, args_parse_uint64)
+#define REQUIRED_REPEATED_SIZE_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(size_t, name, flag, capacity, description, args_parse_size)
+#define REQUIRED_REPEATED_FLOAT_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(float, name, flag, capacity, description, args_parse_float)
+#define REQUIRED_REPEATED_DOUBLE_FLAG(name, flag, capacity, description) REQUIRED_LIST_FLAG(double, name, flag, capacity, description, args_parse_double)
+
+// Positional rest: collects all values after the declared positional arguments.
+#define REST_STRING_ARG(name, min_count, capacity, description) REST_ARG(const char*, name, min_count, capacity, description, args_parse_str)
+#define REST_CHAR_ARG(name, min_count, capacity, description) REST_ARG(char, name, min_count, capacity, description, args_parse_char)
+#define REST_INT16_ARG(name, min_count, capacity, description) REST_ARG(int16_t, name, min_count, capacity, description, args_parse_int16)
+#define REST_UINT16_ARG(name, min_count, capacity, description) REST_ARG(uint16_t, name, min_count, capacity, description, args_parse_uint16)
+#define REST_INT32_ARG(name, min_count, capacity, description) REST_ARG(int32_t, name, min_count, capacity, description, args_parse_int32)
+#define REST_UINT32_ARG(name, min_count, capacity, description) REST_ARG(uint32_t, name, min_count, capacity, description, args_parse_uint32)
+#define REST_INT64_ARG(name, min_count, capacity, description) REST_ARG(int64_t, name, min_count, capacity, description, args_parse_int64)
+#define REST_UINT64_ARG(name, min_count, capacity, description) REST_ARG(uint64_t, name, min_count, capacity, description, args_parse_uint64)
+#define REST_SIZE_ARG(name, min_count, capacity, description) REST_ARG(size_t, name, min_count, capacity, description, args_parse_size)
+#define REST_FLOAT_ARG(name, min_count, capacity, description) REST_ARG(float, name, min_count, capacity, description, args_parse_float)
+#define REST_DOUBLE_ARG(name, min_count, capacity, description) REST_ARG(double, name, min_count, capacity, description, args_parse_double)
 
 // HELPERS
 
@@ -215,12 +259,58 @@ enum {
 static constexpr int REQUIRED_FLAG_COUNT = 0;
 #endif
 
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(...) +1
+static constexpr int LIST_FLAG_COUNT = 0 LIST_FLAGS;
+#undef LIST_FLAG_IMPL
+#else
+static constexpr int LIST_FLAG_COUNT = 0;
+#endif
+
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(...) +1
+static constexpr int POSITIONAL_REST_COUNT = 0 POSITIONAL_REST;
+#undef REST_ARG_IMPL
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) + (min_count)
+static constexpr int POSITIONAL_REST_MIN = 0 POSITIONAL_REST;
+#undef REST_ARG_IMPL
+static_assert(POSITIONAL_REST_COUNT == 1, "declare exactly one POSITIONAL_REST argument");
+#else
+static constexpr int POSITIONAL_REST_COUNT = 0;
+static constexpr int POSITIONAL_REST_MIN = 0;
+#endif
+
+// LIST TYPES
+
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) \
+    typedef struct { type items[capacity]; size_t count; } args_list_##name##_t; \
+    static_assert((capacity) > 0, "list capacity must be greater than zero");
+    LIST_FLAGS
+#undef LIST_FLAG_IMPL
+#endif
+
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) \
+    typedef struct { type items[capacity]; size_t count; } args_rest_##name##_t; \
+    static_assert((capacity) > 0, "rest capacity must be greater than zero"); \
+    static_assert((min_count) >= 0 && (min_count) <= (capacity), "invalid rest min_count");
+    POSITIONAL_REST
+#undef REST_ARG_IMPL
+#endif
+
 // ARG_T STRUCT
 #define POSITIONAL_ARG_IMPL(type, name, ...) type MERGE_TWO(name, _pos_arg);
 #define REQUIRED_FLAG_IMPL(type, name, ...) type MERGE_TWO(name, _required_arg);
 #define OPTIONAL_FLAG_IMPL(type, name, ...) type MERGE_TWO(name, _optional_arg);
 #define BOOLEAN_FLAG_IMPL(name, ...) bool MERGE_TWO(name, _bool_arg);
 #define SHORT_FLAG_IMPL(name, ...) bool MERGE_TWO(name, _short_arg);
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) args_list_##name##_t MERGE_TWO(name, _list_arg);
+#endif
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) args_rest_##name##_t MERGE_TWO(name, _rest_arg);
+#endif
 
 typedef struct {
 #ifdef POSITIONAL_ARGS
@@ -238,6 +328,12 @@ typedef struct {
 #ifdef SHORT_FLAGS
     SHORT_FLAGS
 #endif
+#ifdef LIST_FLAGS
+    LIST_FLAGS
+#endif
+#ifdef POSITIONAL_REST
+    POSITIONAL_REST
+#endif
     int pos_count;
     bool seen[REQUIRED_FLAG_COUNT + 1];
 } args_t;
@@ -247,6 +343,12 @@ typedef struct {
 #undef OPTIONAL_FLAG_IMPL
 #undef REQUIRED_FLAG_IMPL
 #undef POSITIONAL_ARG_IMPL
+#ifdef LIST_FLAGS
+#undef LIST_FLAG_IMPL
+#endif
+#ifdef POSITIONAL_REST
+#undef REST_ARG_IMPL
+#endif
 
 [[maybe_unused]] static inline args_t make_default_args() {
     const args_t args = {
@@ -255,6 +357,12 @@ typedef struct {
 #define OPTIONAL_FLAG_IMPL(type, name, flag, default_val, ...) .MERGE_TWO(name, _optional_arg) = (type) default_val,
 #define BOOLEAN_FLAG_IMPL(name, ...) .MERGE_TWO(name, _bool_arg) = false,
 #define SHORT_FLAG_IMPL(name, ...) .MERGE_TWO(name, _short_arg) = false,
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) .MERGE_TWO(name, _list_arg) = { .items = {}, .count = 0 },
+#endif
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) .MERGE_TWO(name, _rest_arg) = { .items = {}, .count = 0 },
+#endif
 
 #ifdef POSITIONAL_ARGS
         POSITIONAL_ARGS
@@ -271,12 +379,24 @@ typedef struct {
 #ifdef SHORT_FLAGS
         SHORT_FLAGS
 #endif
+#ifdef LIST_FLAGS
+        LIST_FLAGS
+#endif
+#ifdef POSITIONAL_REST
+        POSITIONAL_REST
+#endif
 
 #undef SHORT_FLAG_IMPL
 #undef BOOLEAN_FLAG_IMPL
 #undef OPTIONAL_FLAG_IMPL
 #undef REQUIRED_FLAG_IMPL
 #undef POSITIONAL_ARG_IMPL
+#ifdef LIST_FLAGS
+#undef LIST_FLAG_IMPL
+#endif
+#ifdef POSITIONAL_REST
+#undef REST_ARG_IMPL
+#endif
         .pos_count = 0,
         .seen = {false},
     };
@@ -284,6 +404,22 @@ typedef struct {
 }
 
 // FLAG PARSING
+
+// Appends one parsed value to a fixed-capacity list. Capacity is checked before parsing so a
+// malformed value leaves the list logically unchanged (the unused slot may hold a stub value).
+#define ARGS_APPEND_VALUE(field, capacity, parser, label, text) \
+    do { \
+        if ((field).count >= (capacity)) { \
+            fprintf(stderr, "Error: too many values for '%s' (max %d)\n", (label), (int) (capacity)); \
+            return -1; \
+        } \
+        int ok = 0; \
+        (field).items[(field).count] = parser(label, text, &ok); \
+        if (!ok) { \
+            return -1; \
+        } \
+        ++(field).count; \
+    } while (0)
 
 // --flag=value or --flag value (value-less boolean flags: --flag)
 [[maybe_unused]] static int parse_flag(const int idx, [[maybe_unused]] const int argc, const char *argv[],
@@ -315,6 +451,20 @@ typedef struct {
         return next; \
     }
 
+    // value comes from after '=', or else from the next argv element; append to a list field
+#define ARGS_APPEND_FLAG_VALUE(field, flag, parser, capacity) \
+    if (ARGS_FLAG_MATCHES(flag)) { \
+        if (!value) { \
+            if (next + 1 >= argc) { \
+                fprintf(stderr, "Error: missing value for '--%s'\n", flag); \
+                return -1; \
+            } \
+            value = argv[++next]; \
+        } \
+        ARGS_APPEND_VALUE(args->field, capacity, parser, flag, value); \
+        return next; \
+    }
+
 #ifdef REQUIRED_FLAGS
 #define REQUIRED_FLAG_IMPL(type, name, flag, description, parser) \
     ARGS_SET_VALUE(MERGE_TWO(name, _required_arg), flag, parser, seen[MERGE_TWO(args_idx_, name)] = true)
@@ -326,6 +476,12 @@ typedef struct {
     ARGS_SET_VALUE(MERGE_TWO(name, _optional_arg), flag, parser, (void) 0)
     OPTIONAL_FLAGS
 #undef OPTIONAL_FLAG_IMPL
+#endif
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) \
+    ARGS_APPEND_FLAG_VALUE(MERGE_TWO(name, _list_arg), flag, parser, capacity)
+    LIST_FLAGS
+#undef LIST_FLAG_IMPL
 #endif
 #ifdef BOOLEAN_FLAGS
 #define BOOLEAN_FLAG_IMPL(name, flag, description) \
@@ -342,6 +498,7 @@ typedef struct {
 #endif
 
 #undef ARGS_SET_VALUE
+#undef ARGS_APPEND_FLAG_VALUE
 #undef ARGS_FLAG_MATCHES
 
     fprintf(stderr, "Error: unknown flag '%.*s'\n", (int) (name_len + 2), argv[idx]);
@@ -392,9 +549,22 @@ typedef struct {
     POSITIONAL_ARGS
 #undef POSITIONAL_ARG_IMPL
 #endif
+    // trailing values go to the rest list, but only once every declared position is filled
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) \
+    if (*pos_idx >= POSITIONAL_ARG_COUNT) { \
+        ARGS_APPEND_VALUE(args->MERGE_TWO(name, _rest_arg), capacity, parser, #name, argv[idx]); \
+        ++*pos_idx; \
+        return idx; \
+    }
+    POSITIONAL_REST
+#undef REST_ARG_IMPL
+#endif
     fprintf(stderr, "Error: unexpected positional argument '%s'\n", argv[idx]);
     return -1;
 }
+
+#undef ARGS_APPEND_VALUE
 
 [[maybe_unused]] static bool parse_args(const int argc, const char *argv[], args_t *args) {
     if (!argc || !argv || !args) {
@@ -429,7 +599,7 @@ typedef struct {
 }
 
 [[maybe_unused]] static bool validate_args([[maybe_unused]] const args_t *args) {
-#if defined(REQUIRED_FLAGS) || defined(POSITIONAL_ARGS)
+#if defined(REQUIRED_FLAGS) || defined(POSITIONAL_ARGS) || defined(LIST_FLAGS) || defined(POSITIONAL_REST)
 #define MAYBE_CONST
 #else
 #define MAYBE_CONST constexpr
@@ -444,9 +614,19 @@ typedef struct {
     REQUIRED_FLAGS
 #endif
 #undef REQUIRED_FLAG_IMPL
-#ifdef POSITIONAL_ARGS
-    if (args->pos_count < POSITIONAL_ARG_COUNT) {
-        fprintf(stderr, "Error: expected %d positional argument(s), got %d\n", POSITIONAL_ARG_COUNT, args->pos_count);
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) \
+    if ((required) && args->MERGE_TWO(name, _list_arg).count == 0) { \
+        fprintf(stderr, "Error: missing required list flag '--%s'\n", flag); \
+        ok = false; \
+    }
+    LIST_FLAGS
+#undef LIST_FLAG_IMPL
+#endif
+#if defined(POSITIONAL_ARGS) || defined(POSITIONAL_REST)
+    if (args->pos_count < POSITIONAL_ARG_COUNT + POSITIONAL_REST_MIN) {
+        fprintf(stderr, "Error: expected %d positional argument(s), got %d\n",
+                POSITIONAL_ARG_COUNT + POSITIONAL_REST_MIN, args->pos_count);
         ok = false;
     }
 #endif
@@ -461,17 +641,35 @@ typedef struct {
     POSITIONAL_ARGS
 #undef POSITIONAL_ARG_IMPL
 #endif
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) fprintf(stdout, " [--%s <value>...]", flag);
+    LIST_FLAGS
+#undef LIST_FLAG_IMPL
+#endif
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) fprintf(stdout, " <%s>...", #name);
+    POSITIONAL_REST
+#undef REST_ARG_IMPL
+#endif
     fprintf(stdout, "\n");
 }
 
 [[maybe_unused]] static void print_help(const char *exec_name) {
     args_print_usage(exec_name);
-#ifdef POSITIONAL_ARGS
+#if defined(POSITIONAL_ARGS) || defined(POSITIONAL_REST)
     fprintf(stdout, "\nArguments:\n");
+#ifdef POSITIONAL_ARGS
 #define POSITIONAL_ARG_IMPL(type, name, position, description, parser) \
     fprintf(stdout, "  %-24s %s\n", #name, description);
     POSITIONAL_ARGS
 #undef POSITIONAL_ARG_IMPL
+#endif
+#endif
+#ifdef POSITIONAL_REST
+#define REST_ARG_IMPL(type, name, min_count, capacity, description, parser) \
+    fprintf(stdout, "  %-24s %s (at least %d, max %d)\n", #name, description, (int) (min_count), (int) (capacity));
+    POSITIONAL_REST
+#undef REST_ARG_IMPL
 #endif
     fprintf(stdout, "\nOptions:\n");
 #ifdef REQUIRED_FLAGS
@@ -485,6 +683,13 @@ typedef struct {
     fprintf(stdout, "  --%-22s %s (default: %s)\n", flag, description, #default_val);
     OPTIONAL_FLAGS
 #undef OPTIONAL_FLAG_IMPL
+#endif
+#ifdef LIST_FLAGS
+#define LIST_FLAG_IMPL(type, name, flag, capacity, description, parser, required) \
+    fprintf(stdout, "  --%-22s %s (repeatable, max %d%s)\n", \
+            flag, description, (int) (capacity), (required) ? ", required" : "");
+    LIST_FLAGS
+#undef LIST_FLAG_IMPL
 #endif
 #ifdef BOOLEAN_FLAGS
 #define BOOLEAN_FLAG_IMPL(name, flag, description) \

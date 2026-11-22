@@ -1,0 +1,8 @@
+# Keep clangd's view of the sources in sync with the project's build config.
+# CMake's compile_commands.json is generated in build/ (see Makefile and
+# .vscode/tasks.json), and the header requires C23 even though GCC 16 defaults
+# to it and therefore CMake does not emit an explicit -std flag.
+CompileFlags:
+  CompilationDatabase: build
+  Add:
+    - -std=c23
